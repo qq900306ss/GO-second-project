@@ -1,5 +1,5 @@
 "# second-project" 
-這是一個使用GO 語言寫的類似LINE的功能有註冊 登入database ，還有通訊
+這是一個使用GO 語言寫的類似LINE的功能有註冊和登入database ，還有即時通訊採用UDP跟Redis緩存
 
 https://youtu.be/wTzc4GjK4Mo
 
