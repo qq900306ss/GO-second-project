@@ -1,0 +1,18 @@
+mysql:
+  dns: root:900306@tcp(127.0.0.1:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local
+redis:
+  addr: "127.0.0.1:6379"
+  password: ""
+  DB : 0
+  poolSize: 30
+  minIdleConns: 30
+
+timeout:
+  DelayHearbeat: 3  # seconds
+  HeartbeatHz: 30  # 每隔多少秒心跳時間
+  HeartbeatMaxTime: 30000  # 最大心跳時間
+  RedisOnlineTime: 4  # 緩存的再現用戶時間長 單位H
+
+port:
+  server : ":3000"
+  udp : 3001
