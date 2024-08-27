@@ -4,4 +4,10 @@
 https://youtu.be/wTzc4GjK4Mo
 
 展示可以觀看上面YT 
-前端部分都是找有人做好的，再去做參數調整
+前端部分都是找有人做好的和使用GPT協助完成，再去做參數調整
+
+成果展示
+![image](https://github.com/user-attachments/assets/ee4fdea8-7bd4-4b6d-924b-0f43a69e993b)
+![image](https://github.com/user-attachments/assets/dc92e2b5-b284-438d-8567-42c8b9bb9050)
+![image](https://github.com/user-attachments/assets/039a4500-5685-497f-8fae-b16a6525c97a)
+這是跟好友對話的樣子，採用Goroutine一個負責送一個負責收和使用去redis讀取資料達成高效率，順便減輕database壓力
