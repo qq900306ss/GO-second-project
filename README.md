@@ -2,8 +2,10 @@
 這是一個使用GO 語言寫的類似LINE的功能有註冊和登入database ，還有即時通訊採用UDP跟Redis緩存
 
 https://youtu.be/dz6nbNogw5Q
+
 展示可以觀看上面YT 
-前端部分都是找有人做好的和使用GPT協助完成，再去做參數調整
+
+前端部分都是找有人做好的模板和使用GPT協助完成，再去做參數調整
 
 成果展示
 ![image](https://github.com/user-attachments/assets/ee4fdea8-7bd4-4b6d-924b-0f43a69e993b)
