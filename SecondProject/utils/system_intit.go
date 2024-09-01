@@ -70,7 +70,7 @@ const (
 	PublishKey = "websocket"
 )
 
-func Publish(ctx context.Context, channel string, msg string) error { //發布消息到redis 目的：將消息發布到指定的 Redis 頻道。
+func Publish(ctx context.Context, channel string, msg string) error { //發布消息到redis 目的：將消息發布到指定的 Redis 頻道。 沒用到
 
 	var err error
 	fmt.Println("Publish : ", msg)
@@ -84,8 +84,8 @@ func Publish(ctx context.Context, channel string, msg string) error { //發布�
 	return err
 }
 
-func Subscribe(ctx context.Context, channel string) (string, error) { //訂閱消息到Redis 目的：訂閱指定的 Redis 頻道，並接收消息。
-
+func Subscribe(ctx context.Context, channel string) (string, error) { //訂閱消息到Redis 目的：訂閱指定的 Redis 頻道，並接收消息。 群組感覺可以用這個
+	fmt.Println("Subscribe 有做事情嗎 : ", channel)
 	sub := Red.Subscribe(ctx, channel)
 	fmt.Println("Subscribe ctx : ", ctx) // 終端顯示一下有沒有收到 //都是指針
 	msg, err := sub.ReceiveMessage(ctx)  // 如果沒收到消息就會一直等待

@@ -22,11 +22,11 @@ func Router() *gin.Engine { //設置路由
 	r.LoadHTMLGlob("views/**/*") //設置模板路徑下面所有的
 
 	//首頁
-	r.GET("/", service.Get)                  //用戶/index之後會調用service.GetIndex這函數來處理
-	r.GET("/index", service.GetIndex)        //用戶/index之後會調用service.GetIndex這函數來處理
-	r.GET("/ToRegister", service.ToRegister) //用戶/index之後會調用service.GetIndex這函數來處理
-	r.GET("/ToChant", service.ToChant)       //用戶/index之後會調用service.GetIndex這函數來處理
-	r.GET("/Chat", service.Chat)             //用戶/index之後會調用service.GetIndex這函數來處理
+	r.GET("/", service.Get)           //用戶/index之後會調用service.GetIndex這函數來處理
+	r.GET("/index", service.GetIndex) //用戶/index之後會調用service.GetIndex這函數來處理
+	r.GET("/ToRegister", service.ToRegister)
+	r.GET("/ToChant", service.ToChant)
+	r.GET("/Chat", service.Chat)
 
 	r.POST("/SearchFriend", service.SearchFriend)
 
@@ -51,6 +51,7 @@ func Router() *gin.Engine { //設置路由
 
 	r.POST("/contact/JoinGroup", service.JoinGroup)
 	r.POST("/user/RedisMsg", service.RedisMsg)
+	r.POST("/user/RedisGroupMsg", service.RedisGroupMsg)
 
 	return r
 

@@ -83,7 +83,7 @@ func DeleteUser(user UserBasic) *gorm.DB { //刪除
 	return utils.DB.Delete(&user)
 }
 
-func UpdateUser(user UserBasic) *gorm.DB { //刪除
+func UpdateUser(user UserBasic) *gorm.DB { //更新
 	return utils.DB.Model(&user).Updates(UserBasic{Name: user.Name, Password: user.Password, Phone: user.Phone, Email: user.Email, Avatar: user.Avatar})
 }
 

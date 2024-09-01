@@ -231,8 +231,9 @@ var upGrader = websocket.Upgrader{ //防止跨域站點偽造請求
 	},
 }
 
-func SendMsg(c *gin.Context) {
+func SendMsg(c *gin.Context) { //後來沒用到了
 	ws, err := upGrader.Upgrade(c.Writer, c.Request, nil)
+	fmt.Println("是不是有用到阿sendmsg?", ws)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -242,7 +243,7 @@ func SendMsg(c *gin.Context) {
 		if err != nil {
 			fmt.Println(err)
 		}
-	}(ws)
+	}(ws) //可以確保ws 就算之後變了 也可以還是ws 例如上ws 在最後被改成10 但走到這函數是5 就會也是傳5讓這函數運作
 	MsgHandler(c, ws)
 }
 
@@ -252,7 +253,19 @@ func RedisMsg(c *gin.Context) {
 	start, _ := strconv.Atoi(c.PostForm("start")) //可以控制看幾次
 	end, _ := strconv.Atoi(c.PostForm("end"))
 	isRev, _ := strconv.ParseBool(c.PostForm("isRev")) //是否反轉
-	res := moudle.RedisMsg(int64(userIdA), int64(userIdB), int64(start), int64(end), isRev)
+	res := moudle.RedisMsg(int64(userIdA), int64(userIdB), 0, int64(start), int64(end), isRev)
+	utils.RespOKList(c.Writer, "ok", res)
+}
+
+func RedisGroupMsg(c *gin.Context) {
+	userIdA, _ := strconv.Atoi(c.PostForm("userIdA"))
+	userIdB, _ := strconv.Atoi(c.PostForm("userIdB"))
+	groupId, _ := strconv.Atoi(c.PostForm("groupId"))
+	start, _ := strconv.Atoi(c.PostForm("start")) //可以控制看幾次
+	end, _ := strconv.Atoi(c.PostForm("end"))
+	isRev, _ := strconv.ParseBool(c.PostForm("isRev")) //是否反轉
+	fmt.Println("GroupID:", groupId)
+	res := moudle.RedisMsg(int64(userIdA), int64(userIdB), int64(groupId), int64(start), int64(end), isRev)
 	utils.RespOKList(c.Writer, "ok", res)
 }
 
@@ -260,7 +273,7 @@ func MsgHandler(c *gin.Context, ws *websocket.Conn) {
 	for {
 		msg, err := utils.Subscribe(c, utils.PublishKey)
 		if err != nil {
-			fmt.Println(" MsgHandler 发送失败", err)
+			fmt.Println(" MsgHandler 發送失敗", err)
 		}
 
 		tm := time.Now().Format("2006-01-02 15:04:05")

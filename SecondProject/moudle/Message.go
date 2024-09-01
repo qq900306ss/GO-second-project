@@ -23,6 +23,7 @@ type Message struct {
 	gorm.Model
 	UserId     int64  //發送者
 	TargetId   int64  //接受者
+	GroupId    int64  //群組
 	Type       int    //發送類型  1私人  群組  3心跳
 	Media      int    //訊息類型  1文字 2表情包 語音 4圖片
 	Content    string //訊息內容
@@ -31,7 +32,7 @@ type Message struct {
 	Pic        string
 	Url        string
 	Desc       string
-	Amount     int //其他数字统计
+	Amount     int //沒用到
 }
 
 func (table *Message) TableName() string {
@@ -40,6 +41,7 @@ func (table *Message) TableName() string {
 
 type Node struct {
 	Conn      *websocket.Conn
+	Addr      string // 地址
 	DataQueue chan []byte
 	GroupSets set.Interface //群組集合
 }
@@ -71,6 +73,7 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	//2. 獲取conn
+
 	node := &Node{
 		Conn:      conn,
 		DataQueue: make(chan []byte, 50),
@@ -79,8 +82,12 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 
 	//3. 用戶關係
 	//4.userid 跟 node 綁定 並加鎖
+
 	rwLocker.Lock()
 	clientMap[userId] = node
+
+	fmt.Println("調用了clientMap :", userId)
+
 	rwLocker.Unlock()
 
 	//5.完成發送邏輯
@@ -89,6 +96,9 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	go sendProc(node)
 
 	go recvProc(node)
+
+	SetUserOnlineInfo("online_"+Id, []byte(Id), time.Duration(viper.GetInt("timeout.RedisOnlineTime"))*time.Hour)
+
 	sendMsg(userId, []byte("歡迎進入聊天室roger"))
 
 }
@@ -97,7 +107,7 @@ func sendProc(node *Node) {
 	for {
 		select {
 		case data := <-node.DataQueue:
-			fmt.Println("[ws]sendProc >>>> msg :", string(data))
+			fmt.Println("[放入]sendProc >>>> msg :", string(data))
 			err := node.Conn.WriteMessage(websocket.TextMessage, data)
 			if err != nil {
 				fmt.Println(err)
@@ -110,12 +120,13 @@ func sendProc(node *Node) {
 func recvProc(node *Node) {
 	for {
 		_, data, err := node.Conn.ReadMessage()
+
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		msg := Message{}
-		err = json.Unmarshal(data, &msg)
+		err = json.Unmarshal(data, &msg) //可以解析Json 格式的Data 進而轉換成go 格式存入msg中
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -128,8 +139,9 @@ func recvProc(node *Node) {
 
 var udpsendchan chan []byte = make(chan []byte, 1024) //發送廣告的通道
 
-func broadMsg(data []byte) {
+func broadMsg(data []byte) { //跟接受消息廣播出來沒啥差別
 	udpsendchan <- data
+	fmt.Println("broadMsg  data :", string(data))
 }
 
 func init() {
@@ -139,10 +151,10 @@ func init() {
 
 }
 
-// 完成udp 數據發送協成
+// 完成udp 數據發送協成 只是做回應給網頁
 func udpSendProc() {
 	con, err := net.DialUDP("udp", nil, &net.UDPAddr{
-		IP:   net.IPv4(192, 168, 0, 255),
+		IP:   net.IPv4(192, 168, 0, 255), //這裡192.168.0.255 這樣的地址，這是一個廣播地址，會將數據發送到同一子網內的所有設備。  內部網絡：在內部網絡環境中，通常使用私有 IP 地址（例如 192.168.x.x、10.x.x.x、172.16.x.x 到 172.31.x.x 範圍）。
 		Port: viper.GetInt("port.udp"),
 	})
 	defer con.Close()
@@ -166,7 +178,7 @@ func udpSendProc() {
 // 完成udp數據接收協程
 func udpRecvProc() {
 	con, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   net.IPv4zero,
+		IP:   net.IPv4zero, //net.IPv4zero 是一個特殊的 IP 地址 0.0.0.0。這個地址表示伺服器將在所有本地網絡接口上進行監聽。這樣，伺服器可以接收來自任何網絡接口的 UDP 數據包。
 		Port: viper.GetInt("port.udp"),
 	})
 	if err != nil {
@@ -200,46 +212,60 @@ func dispatch(data []byte) {
 		fmt.Println("dispatch  data :", string(data))
 		sendMsg(msg.TargetId, data)
 	case 2: //群發
-		// sendGroupMsg(msg.TargetId, data) //
-		// case 4: // 心跳
-		// 	node.Heartbeat()
-		//case 4:
-		//
+
+		sendGroupMsg(msg.GroupId, data)
+
+		fmt.Println("dispatch  data :", string(data))
+
 	}
 }
 
 func sendMsg(userId int64, msg []byte) {
-	rwLocker.RLock()
-	node, ok := clientMap[userId]
-	rwLocker.RUnlock()
+
 	jsonMsg := Message{}
 	json.Unmarshal(msg, &jsonMsg) //解析json
-	ctx := context.Background()
+
+	ctx := context.Background() //不需要取消或截止時間的上下文：當你確定在某個操作過程中不需要取消操作或者設置截止時間時，可以使用 context.Background()。
 	targetIdStr := strconv.Itoa(int(userId))
 	userIdStr := strconv.Itoa(int(jsonMsg.UserId))
 	jsonMsg.CreateTime = uint64(time.Now().Unix()) //創建時間
+
 	// r, err := utils.Red.Get(ctx, "online_"+userIdStr).Result()
 	// if err != nil {
 	// 	fmt.Println(err)
 	// }
 
+	rwLocker.RLock()
+	node, ok := clientMap[userId]
+	rwLocker.RUnlock()
+
+	fmt.Println("測試主要地方:", string(msg), "userId:", userId)
 	if ok {
 		fmt.Println("sendMsg >>> userID: ", userId, "  msg:", string(msg))
+
 		node.DataQueue <- msg
 
+	} else {
+		fmt.Println("ok怎麼了???", ok)
 	}
 	var key string
-	if userId > jsonMsg.UserId {
+	if userId > jsonMsg.UserId && jsonMsg.GroupId == 0 {
 		key = "msg_" + userIdStr + "_" + targetIdStr
 	} else {
 		key = "msg_" + targetIdStr + "_" + userIdStr
 	}
+
 	res, err := utils.Red.ZRevRange(ctx, key, 0, -1).Result() //ZRevRange 倒數排序
 	if err != nil {
 		fmt.Println(err)
 	}
 	score := float64(cap(res)) + 1                                     //紀錄+1
-	ress, e := utils.Red.ZAdd(ctx, key, &redis.Z{score, msg}).Result() //jsonMsg
+	ress, e := utils.Red.ZAdd(ctx, key, &redis.Z{score, msg}).Result() //jsonMsg //key有序集合不存在會自己建立出來
+
+	fmt.Println("jsonMsg.GroupId : ", jsonMsg.GroupId)
+
+	fmt.Println("測試一下key", key)
+	fmt.Println("測試一下ress", ress)
 	//res, e := utils.Red.Do(ctx, "zadd", key, 1, jsonMsg).Result() //備用 後續有機會拓展 紀錄完整msg 有機會的話
 	if e != nil {
 		fmt.Println(e)
@@ -251,21 +277,29 @@ func (msg Message) MarshalBinary() ([]byte, error) {
 	return json.Marshal(msg)
 }
 
-func RedisMsg(userIdA int64, userIdB int64, start int64, end int64, isRev bool) []string {
-	rwLocker.RLock()
+func RedisMsg(userIdA int64, userIdB int64, groupId int64, start int64, end int64, isRev bool) []string { //單純用來回傳指定redis內容
+	// rwLocker.RLock()
 	//node, ok := clientMap[userIdA]
-	rwLocker.RUnlock()
+	// rwLocker.RUnlock()
 	//jsonMsg := Message{}
 	//json.Unmarshal(msg, &jsonMsg)
 	ctx := context.Background()
 	userIdStr := strconv.Itoa(int(userIdA))
 	targetIdStr := strconv.Itoa(int(userIdB))
+	groupIdStr := strconv.Itoa(int(groupId))
+
 	var key string
-	if userIdA > userIdB {
+	if userIdA > userIdB && groupId == 0 {
 		key = "msg_" + targetIdStr + "_" + userIdStr
 	} else {
 		key = "msg_" + userIdStr + "_" + targetIdStr
 	}
+	if groupId != 0 {
+
+		key = "groupmsg_" + groupIdStr
+
+	}
+	fmt.Println("這裡的key :", key)
 	//key = "msg_" + userIdStr + "_" + targetIdStr
 	//rels, err := utils.Red.ZRevRange(ctx, key, 0, 10).Result()  //根據分數倒數
 
@@ -309,4 +343,70 @@ func JoinGroup(userId uint, comId string) (int, string) {
 		return 0, "加入成功"
 	}
 
+}
+
+func sendGroupMsg(userId int64, msg []byte) { //userid在這是groupid
+
+	jsonMsg := Message{}
+	json.Unmarshal(msg, &jsonMsg) //解析json
+	ctx := context.Background()   //不需要取消或截止時間的上下文：當你確定在某個操作過程中不需要取消操作或者設置截止時間時，可以使用 context.Background()。
+	targetIdStr := strconv.Itoa(int(userId))
+	userIdStr := strconv.Itoa(int(jsonMsg.UserId))
+	groupIdStr := strconv.Itoa(int(jsonMsg.GroupId))
+	jsonMsg.CreateTime = uint64(time.Now().Unix()) //創建時間
+	// r, err := utils.Red.Get(ctx, "online_"+userIdStr).Result()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+
+	number := SearchGroupWho(uint(userId))
+	var key string
+	for _, n := range number { //找群組成員有誰
+
+		rwLocker.RLock()
+		node, ok := clientMap[int64(n)]
+		rwLocker.RUnlock()
+
+		fmt.Println("測試主要地方:", string(msg), "userId:", n)
+		if ok {
+			if int64(n) == int64(jsonMsg.UserId) { //不發給自己
+				continue
+			}
+			fmt.Println("sendMsg >>> userID: ", userId, "  msg:", string(msg))
+
+			node.DataQueue <- msg
+
+		} else {
+			fmt.Println("ok怎麼了???", ok)
+		}
+
+	}
+
+	if userId > jsonMsg.UserId && jsonMsg.GroupId == 0 {
+		key = "msg_" + userIdStr + "_" + targetIdStr
+	} else {
+		key = "msg_" + targetIdStr + "_" + userIdStr
+	}
+	if jsonMsg.GroupId != 0 {
+
+		key = "groupmsg_" + groupIdStr
+
+	}
+
+	res, err := utils.Red.ZRevRange(ctx, key, 0, -1).Result() //ZRevRange 倒數排序
+	if err != nil {
+		fmt.Println(err)
+	}
+	score := float64(cap(res)) + 1                                     //紀錄+1
+	ress, e := utils.Red.ZAdd(ctx, key, &redis.Z{score, msg}).Result() //jsonMsg //key有序集合不存在會自己建立出來
+
+	fmt.Println("jsonMsg.GroupId : ", jsonMsg.GroupId)
+
+	fmt.Println("測試一下key", key)
+	fmt.Println("測試一下ress", ress)
+	//res, e := utils.Red.Do(ctx, "zadd", key, 1, jsonMsg).Result() //備用 後續有機會拓展 紀錄完整msg 有機會的話
+	if e != nil {
+		fmt.Println(e)
+	}
+	fmt.Println(ress)
 }
