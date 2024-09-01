@@ -15,5 +15,6 @@ https://youtu.be/dz6nbNogw5Q
 
 ![image](https://github.com/user-attachments/assets/274e3409-9d54-4412-a4d5-47bd7faa6cb5)
 上面是群組聊天樣子，一樣採用redis，並且都含有及時顯示功能
+
 https://youtu.be/wTzc4GjK4Mo
 群組聊天室未更新時候
