@@ -64,7 +64,7 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 	isvalida := true //token 驗證 //等等checkToke()
 	conn, err := (&websocket.Upgrader{
 		//token 驗證
-		CheckOrigin: func(r *http.Request) bool {
+		CheckOrigin: func(r *http.Request) bool { //防止跨領域請求
 			return isvalida
 		},
 	}).Upgrade(writer, request, nil)
@@ -215,7 +215,7 @@ func dispatch(data []byte) {
 
 		sendGroupMsg(msg.GroupId, data)
 
-		fmt.Println("dispatch  data :", string(data))
+		fmt.Println("dispatch  data (group):", string(data))
 
 	}
 }
@@ -273,7 +273,7 @@ func sendMsg(userId int64, msg []byte) {
 	fmt.Println(ress)
 }
 
-func (msg Message) MarshalBinary() ([]byte, error) {
+func (msg Message) MarshalBinary() ([]byte, error) { //當 Message 結構體實現了 MarshalBinary 方法，它就符合 BinaryMarshaler 接口的要求，並且可以被用於需要二進制序列化的場景，比如將數據發送到網絡中，或者儲存到二進制文件
 	return json.Marshal(msg)
 }
 
