@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github/qq900306ss/SecondProject/utils"
-	"net"
 	"net/http"
 	"strconv"
 	"sync"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
-	"github.com/spf13/viper"
 	"gopkg.in/fatih/set.v0"
 	"gorm.io/gorm"
 )
@@ -43,7 +41,7 @@ type Node struct {
 	Conn      *websocket.Conn
 	Addr      string // 地址
 	DataQueue chan []byte
-	GroupSets set.Interface //群組集合
+	GroupSets set.Interface //群組集合沒用到
 }
 
 var clientMap map[int64]*Node = make(map[int64]*Node, 0) // 映射關係
@@ -97,7 +95,7 @@ func Chat(writer http.ResponseWriter, request *http.Request) {
 
 	go recvProc(node)
 
-	SetUserOnlineInfo("online_"+Id, []byte(Id), time.Duration(viper.GetInt("timeout.RedisOnlineTime"))*time.Hour)
+	// SetUserOnlineInfo("online_"+Id, []byte(Id), time.Duration(viper.GetInt("timeout.RedisOnlineTime"))*time.Hour)
 
 	sendMsg(userId, []byte("歡迎進入聊天室roger"))
 
@@ -131,72 +129,72 @@ func recvProc(node *Node) {
 			fmt.Println(err)
 		}
 		dispatch(data)
-		broadMsg(data)
+		// broadMsg(data) 沒想好廣播什麼
 		fmt.Println("[ws] recvProc <<<<< ", string(data))
 
 	}
 }
 
-var udpsendchan chan []byte = make(chan []byte, 1024) //發送廣告的通道
+// var udpsendchan chan []byte = make(chan []byte, 1024) //發送廣告的通道
 
-func broadMsg(data []byte) { //跟接受消息廣播出來沒啥差別
-	udpsendchan <- data
-	fmt.Println("broadMsg  data :", string(data))
-}
+// func broadMsg(data []byte) { //跟接受消息廣播出來沒啥差別
+// 	udpsendchan <- data
+// 	fmt.Println("broadMsg  data :", string(data))
+// }
 
-func init() {
-	go udpSendProc()
-	go udpRecvProc()
-	fmt.Println("init goroutine :")
+// func init() { //這邊是一開始做給ws網站 做測試用
+// 	go udpSendProc()
+// 	go udpRecvProc()
+// 	fmt.Println("init goroutine :")
 
-}
+// }
 
 // 完成udp 數據發送協成 只是做回應給網頁
-func udpSendProc() {
-	con, err := net.DialUDP("udp", nil, &net.UDPAddr{
-		IP:   net.IPv4(192, 168, 0, 255), //這裡192.168.0.255 這樣的地址，這是一個廣播地址，會將數據發送到同一子網內的所有設備。  內部網絡：在內部網絡環境中，通常使用私有 IP 地址（例如 192.168.x.x、10.x.x.x、172.16.x.x 到 172.31.x.x 範圍）。
-		Port: viper.GetInt("port.udp"),
-	})
-	defer con.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
-	for {
-		select {
-		case data := <-udpsendchan:
-			fmt.Println("udpSendProc  data :", string(data))
-			_, err := con.Write(data)
-			if err != nil {
-				fmt.Println(err)
-				return
-			}
-		}
-	}
+// func udpSendProc() {
+// 	con, err := net.DialUDP("udp", nil, &net.UDPAddr{
+// 		IP:   net.IPv4(192, 168, 0, 255), //這裡192.168.0.255 這樣的地址，這是一個廣播地址，會將數據發送到同一子網內的所有設備。  內部網絡：在內部網絡環境中，通常使用私有 IP 地址（例如 192.168.x.x、10.x.x.x、172.16.x.x 到 172.31.x.x 範圍）。
+// 		Port: viper.GetInt("port.udp"),
+// 	})
+// 	defer con.Close()
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// 	for {
+// 		select {
+// 		case data := <-udpsendchan:
+// 			fmt.Println("udpSendProc  data :", string(data))
+// 			_, err := con.Write(data)
+// 			if err != nil {
+// 				fmt.Println(err)
+// 				return
+// 			}
+// 		}
+// 	}
 
-}
+// }
 
-// 完成udp數據接收協程
-func udpRecvProc() {
-	con, err := net.ListenUDP("udp", &net.UDPAddr{
-		IP:   net.IPv4zero, //net.IPv4zero 是一個特殊的 IP 地址 0.0.0.0。這個地址表示伺服器將在所有本地網絡接口上進行監聽。這樣，伺服器可以接收來自任何網絡接口的 UDP 數據包。
-		Port: viper.GetInt("port.udp"),
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer con.Close()
-	for {
-		var buf [512]byte
+// // 完成udp數據接收協程
+// func udpRecvProc() {
+// 	con, err := net.ListenUDP("udp", &net.UDPAddr{
+// 		IP:   net.IPv4zero, //net.IPv4zero 是一個特殊的 IP 地址 0.0.0.0。這個地址表示伺服器將在所有本地網絡接口上進行監聽。這樣，伺服器可以接收來自任何網絡接口的 UDP 數據包。
+// 		Port: viper.GetInt("port.udp"),
+// 	})
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
+// 	defer con.Close()
+// 	for {
+// 		var buf [512]byte
 
-		n, err := con.Read(buf[0:])
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		fmt.Println("udpRecvProc  data :", string(buf[0:n]))
-		dispatch(buf[0:n])
-	}
-}
+// 		n, err := con.Read(buf[0:])
+// 		if err != nil {
+// 			fmt.Println(err)
+// 			return
+// 		}
+// 		fmt.Println("udpRecvProc  data :", string(buf[0:n]))
+// 		dispatch(buf[0:n])
+// 	}
+// }
 
 // 後端調度羅傑處理
 func dispatch(data []byte) {
@@ -239,14 +237,14 @@ func sendMsg(userId int64, msg []byte) {
 	node, ok := clientMap[userId]
 	rwLocker.RUnlock()
 
-	fmt.Println("測試主要地方:", string(msg), "userId:", userId)
+	// fmt.Println("測試主要地方:", string(msg), "userId:", userId)
 	if ok {
 		fmt.Println("sendMsg >>> userID: ", userId, "  msg:", string(msg))
 
-		node.DataQueue <- msg
+		node.DataQueue <- msg // 讓對方 CHANEL 收到消息
 
 	} else {
-		fmt.Println("ok怎麼了???", ok)
+		fmt.Println("對方沒上限沒必要發送", ok)
 	}
 	var key string
 	if userId > jsonMsg.UserId && jsonMsg.GroupId == 0 {
@@ -259,18 +257,18 @@ func sendMsg(userId int64, msg []byte) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	score := float64(cap(res)) + 1                                     //紀錄+1
-	ress, e := utils.Red.ZAdd(ctx, key, &redis.Z{score, msg}).Result() //jsonMsg //key有序集合不存在會自己建立出來
+	score := float64(cap(res)) + 1                                  //紀錄+1
+	_, e := utils.Red.ZAdd(ctx, key, &redis.Z{score, msg}).Result() //jsonMsg //key有序集合不存在會自己建立出來 _改ress可看有個幾個元素添加成功
 
-	fmt.Println("jsonMsg.GroupId : ", jsonMsg.GroupId)
+	// fmt.Println("jsonMsg.GroupId : ", jsonMsg.GroupId)
 
-	fmt.Println("測試一下key", key)
-	fmt.Println("測試一下ress", ress)
+	// fmt.Println("測試一下key", key)
+	// fmt.Println("測試一下ress", ress)
 	//res, e := utils.Red.Do(ctx, "zadd", key, 1, jsonMsg).Result() //備用 後續有機會拓展 紀錄完整msg 有機會的話
 	if e != nil {
 		fmt.Println(e)
 	}
-	fmt.Println(ress)
+	// fmt.Println(ress) //表示添加幾個元素(字串)進去
 }
 
 func (msg Message) MarshalBinary() ([]byte, error) { //當 Message 結構體實現了 MarshalBinary 方法，它就符合 BinaryMarshaler 接口的要求，並且可以被用於需要二進制序列化的場景，比如將數據發送到網絡中，或者儲存到二進制文件
@@ -299,7 +297,7 @@ func RedisMsg(userIdA int64, userIdB int64, groupId int64, start int64, end int6
 		key = "groupmsg_" + groupIdStr
 
 	}
-	fmt.Println("這裡的key :", key)
+	// fmt.Println("這裡的key :", key)
 	//key = "msg_" + userIdStr + "_" + targetIdStr
 	//rels, err := utils.Red.ZRevRange(ctx, key, 0, 10).Result()  //根據分數倒數
 
@@ -320,6 +318,8 @@ func RedisMsg(userIdA int64, userIdB int64, groupId int64, start int64, end int6
 		fmt.Println("sendMsg >>> userID: ", userIdA, "  msg:", val)
 		node.DataQueue <- []byte(val)
 	}**/
+
+	fmt.Println("key:", key)
 	return rels
 }
 
@@ -367,7 +367,7 @@ func sendGroupMsg(userId int64, msg []byte) { //userid在這是groupid
 		node, ok := clientMap[int64(n)]
 		rwLocker.RUnlock()
 
-		fmt.Println("測試主要地方:", string(msg), "userId:", n)
+		// fmt.Println("測試主要地方:", string(msg), "userId:", n)
 		if ok {
 			if int64(n) == int64(jsonMsg.UserId) { //不發給自己
 				continue
@@ -377,7 +377,7 @@ func sendGroupMsg(userId int64, msg []byte) { //userid在這是groupid
 			node.DataQueue <- msg
 
 		} else {
-			fmt.Println("ok怎麼了???", ok)
+			fmt.Println("群組這人沒在線上 id:", n)
 		}
 
 	}
@@ -402,8 +402,8 @@ func sendGroupMsg(userId int64, msg []byte) { //userid在這是groupid
 
 	fmt.Println("jsonMsg.GroupId : ", jsonMsg.GroupId)
 
-	fmt.Println("測試一下key", key)
-	fmt.Println("測試一下ress", ress)
+	// fmt.Println("測試一下key", key)
+	// fmt.Println("測試一下ress", ress)
 	//res, e := utils.Red.Do(ctx, "zadd", key, 1, jsonMsg).Result() //備用 後續有機會拓展 紀錄完整msg 有機會的話
 	if e != nil {
 		fmt.Println(e)

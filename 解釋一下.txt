@@ -1,0 +1,8 @@
+websocket 傳輸 a -------> 前端 showmsg 和 webSocket.send(JSON.stringify(msg)) --------> 後端跟這websocket 有聯結的_, data, err := node.Conn.ReadMessage()  接收訊息之後發送出去---->		sendMsg(msg.TargetId, data)
+
+
+
+
+
+然後就在後端 傳送給某個node ->之後再接收完傳回前端做顯示 onmessage: function (data) 裡面的showmsg 做顯示 。
+
