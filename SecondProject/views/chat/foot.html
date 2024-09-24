@@ -83,7 +83,8 @@
                     TargetId: -1,
                     Type: -1,
                     CreateTime: new Date().getTime(), //給他建立個時間
-                    userId: userId()
+                    userId: userId(),
+                    GroupId: 0
                 },
                 plugins: [
                     {
@@ -138,7 +139,7 @@
                 duration: 0,
                 showprocess: false,
                 currentGrouid: 0,
-                currentChatId: false,
+                currentChatId: 0,
                 
 
             },
@@ -269,7 +270,7 @@
                 showweixin: function () {
                     mui.alert("roger打給我")
                 },
-                showmsg: function (user, msg, isReverse, isFirst ,groupId) {
+                showmsg: function (user, msg, isReverse, isFirst ) {
                     
                     // console.log(">>>>>>>>>>>", msg) 會發現他是字串沒做json轉換
                     var data = {
@@ -349,7 +350,9 @@
                         msg.Media = 4;
                         msg.url = picurl;
                         msg.Avatar = userInfo().Avatar;
-
+                        if (msg.Type == 1 ){
+                            msg.groupId = 0
+                        }
                         if (msg.Type == 1 || msg.Type == 2 ) {
                             this.showmsg(userInfo(), msg);
                         }
@@ -380,7 +383,6 @@
                     this.panelstat = 'kbord';
                 },
                 singlemsg: function (user) {
-                    console.log("有啥:",user)
                     this.start = 0;
                     this.end = 9;
                     
@@ -401,12 +403,14 @@
                         this.setTimeFlag()
                         //console.log(user)
                         this.currentGrouid = 0;
-                        this.currentChatId = true;
+                        this.currentChatId = parseInt(user.ID);
+                        console.log("currentChatId", this.currentChatId)
                         this.win = "single";
                         this.title = "和" + user.Name + "聊天中";
                         this.otherAvatar = user.Avatar;
                         this.msgcontext.TargetId = parseInt(user.ID);
                         this.msgcontext.Type = 1;
+                        this.msgcontext.GroupId = 0;
                         mui('.mui-scroll-wrapper').scroll({
                             scrollY: true, // 是否垂直滾動
                             scrollX: false, // 是否水平滾動
@@ -443,7 +447,6 @@
                 },
                 //群聊的初始化
                 groupmsg: function (user) {
-                    console.log("有啥:",user)
                     this.start = 0;
                     this.end = 9;
                     if (this.isDisable) {
@@ -465,8 +468,9 @@
                         this.title = user.Name;
 
                         this.currentGrouid = user.ID;
-                        this.currentChatId = false;
-                    
+                        this.currentChatId = 0;
+                        console.log("currentGrouid", this.currentGrouid)
+
                         this.msgcontext.GroupId = parseInt(user.ID);
                         this.msgcontext.TargetId = -1;
                         this.msgcontext.Type = 2;
@@ -520,21 +524,29 @@
                 onmessage: function (data) {
                     this.loaduserinfo(data.userId, function (user) {
                                     // this.showmsg(user, data);
-
-                        if (data.GroupId !== undefined) {
+                        console.log("data", data)
+                        console.log("currentChatId", this.currentChatId)
+                        if (data.GroupId !== 0) {
                         // 如果是群組消息，檢查群組 ID
-                            if (data.GroupId === this.currentGrouid) {
-                                        this.showmsg(user, data);
+                            if (data.GroupId === this.currentGrouid && this.currentGrouid !== 0) {
+                                    console.log("群聊消息")
+
+                                    this.showmsg(user, data);
                                 }
-                         } else if ( this.currentChatId!== false) {
+                         } else if ( this.currentChatId === data.userId) {
                                 // 如果是私聊消息，檢查私聊 ID
+                                    console.log("私聊消息")
                                     this.showmsg(user, data);
                          }
-                                this.friends.map((item) => {
+
+
+                        this.friends.map((item) => {
                             if (item.ID == data.userId) {
+
                                 // 1文字 2表情 3圖片 4語音
                                 if (data.Media === 1) {
                                     item.memo = data.Content
+
                                 } else if (data.Media === 2) {
                                     item.memo = data.Url
                                 } else if (data.Media === 3) {
