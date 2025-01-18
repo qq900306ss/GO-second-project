@@ -7,7 +7,7 @@ services:
       - mysql
       - redis
     ports:
-      - "8000:8000"
+      - "3000:3000"
     networks:
       - myapp-network
     environment:

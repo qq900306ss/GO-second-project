@@ -1,7 +1,6 @@
 package moudle
 
 import (
-	"fmt"
 	"github/qq900306ss/SecondProject/utils"
 
 	"gorm.io/gorm"
@@ -26,7 +25,6 @@ func SearchFriend(userid uint) []UserBasic {
 	objIds := make([]uint64, 0)
 	utils.DB.Where("owner_id =? and type = 1", userid).Find(&contacts)
 	for _, v := range contacts {
-		fmt.Println(">>>>>>>>>", v)
 
 		objIds = append(objIds, uint64(v.TagetId))
 	}
@@ -41,7 +39,6 @@ func AddFriend(userId uint, targetName string) (int, string) {
 	if targetName != "" {
 		targetUser := FindUserByName(targetName)
 
-		// fmt.Println(targetId, "      ", userId)
 		if targetUser.Sweet != "" {
 			if targetUser.ID == userId {
 				return -1, "不能加自己"
@@ -91,8 +88,6 @@ func SearchGroupWho(userid uint) []uint64 {
 	objIds := make([]uint64, 0)
 	utils.DB.Where("taget_id =? and type = 2", userid).Find(&contacts)
 	for _, v := range contacts {
-		fmt.Println(">>>>>>>>>", v)
-
 		objIds = append(objIds, uint64(v.OwnerId))
 	}
 	return objIds

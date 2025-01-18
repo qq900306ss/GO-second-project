@@ -19,7 +19,7 @@ func Router() *gin.Engine { //設置路由
 
 	//靜態資料
 	r.Static("/asset", "asset/") //設置靜態資料夾路徑
-	r.LoadHTMLGlob("/app/views/**/*.html")
+	r.LoadHTMLGlob("views/**/*") //設置模板路徑下面所有的
 
 	//首頁
 	r.GET("/", service.Get)           //用戶/index之後會調用service.GetIndex這函數來處理

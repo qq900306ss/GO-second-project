@@ -14,5 +14,5 @@ timeout:
   RedisOnlineTime: 4  # 緩存的再現用戶時間長 單位H
 
 port:
-  server : ":8000"
+  server : ":3000"
   udp : 3001

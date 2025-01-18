@@ -49,7 +49,6 @@ func CreateUser(c *gin.Context) {
 	user.Name = c.Request.FormValue("name")
 	password := c.Request.FormValue("password")
 	repassword := c.Request.FormValue("repassword")
-	fmt.Println("密碼: ", password)
 	sweet := fmt.Sprintf("%06d", rand.Int31())
 
 	data := moudle.FindUserByName(user.Name)
@@ -86,7 +85,6 @@ func CreateUser(c *gin.Context) {
 
 	user.Password = utils.MakePassword(password, sweet) //加密密碼
 	user.Sweet = sweet
-	fmt.Println(user.Password)
 
 	moudle.CreateUser(user)
 
@@ -113,10 +111,7 @@ func FindUserByNameAndPwd(c *gin.Context) { //方法
 	name := c.Request.FormValue("name")
 	password := c.Request.FormValue("password")
 
-	fmt.Println("有棟ㄇ?:", name, "password:", password)
-
 	user := moudle.FindUserByName(name)
-	fmt.Println("有東西?", user)
 
 	if user.Name == "" {
 		c.JSON(http.StatusOK, gin.H{ //創造一個map json格式 gin.H就是回應

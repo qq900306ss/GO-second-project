@@ -1,7 +1,6 @@
 package moudle
 
 import (
-	"fmt"
 	"github/qq900306ss/SecondProject/utils"
 
 	"gorm.io/gorm"
@@ -42,9 +41,6 @@ func Loadcommunity(ownerId uint) ([]*Community, string) {
 	data := make([]*Community, 10)
 
 	utils.DB.Where("id in ?", objIds).Find(&data)
-	for _, v := range data {
-		fmt.Println(v)
-	}
 
 	return data, "取得群組成功"
 }

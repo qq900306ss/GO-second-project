@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github/qq900306ss/SecondProject/moudle"
 	"html/template"
 	"net/http"
@@ -18,14 +17,11 @@ type ResponseMessage struct {
 func Get(c *gin.Context) {
 
 	ind, err := template.ParseFiles("index.html", "views/chat/head.html")
-	fmt.Println("ind有運作")
 
 	if err != nil {
-		fmt.Println("有錯在Get這邊")
 		panic(err)
 	}
 	ind.Execute(c.Writer, "index")
-	fmt.Println("ind之後還是有做")
 
 }
 
@@ -58,7 +54,6 @@ func ToRegister(c *gin.Context) {
 }
 
 func ToChant(c *gin.Context) {
-
 	ind, err := template.ParseFiles("views/chat/index.html",
 		"views/chat/head.html",
 		"views/chat/tabmenu.html",
@@ -79,8 +74,6 @@ func ToChant(c *gin.Context) {
 	user := moudle.UserBasic{}
 	user.ID = uint(userId)
 	user.Indentity = token
-	fmt.Println("顯示一下:", user.ID, user.Indentity)
-
 	ind.Execute(c.Writer, user)
 }
 
