@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	db, err := gorm.Open(mysql.Open("root:900306@tcp(127.0.0.1:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{}) // parse time 把他轉go 的time.time 格式 loc 是當地時間
+	db, err := gorm.Open(mysql.Open("root:55555@tcp(127.0.0.1:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local"), &gorm.Config{}) // parse time 把他轉go 的time.time 格式 loc 是當地時間
 	if err != nil {
 		panic("failed to connect database")
 	}
