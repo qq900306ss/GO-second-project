@@ -1,7 +1,7 @@
 mysql:
-  dns: root:900306@tcp(127.0.0.1:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local
+  dns: root:900306@tcp(mysql:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local
 redis:
-  addr: "127.0.0.1:6379"
+  addr: "redis:6379"
   password: ""
   DB : 0
   poolSize: 30
@@ -14,5 +14,5 @@ timeout:
   RedisOnlineTime: 4  # 緩存的再現用戶時間長 單位H
 
 port:
-  server : ":3000"
+  server : ":8000"
   udp : 3001
