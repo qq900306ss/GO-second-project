@@ -1,5 +1,5 @@
 mysql:
-  dns: root:55555@tcp(mysql:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local
+  dns: root:900306@tcp(mysql:3306)/secondproject?charset=utf8mb4&parseTime=True&loc=Local
 redis:
   addr: "redis:6379"
   password: ""
