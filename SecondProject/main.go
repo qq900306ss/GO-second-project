@@ -20,6 +20,7 @@ func main() {
 		&moudle.Message{},
 		&moudle.Contact{},
 		&moudle.GroupBasic{},
+		&moudle.Community{},
 	)
 	if err != nil {
 		log.Fatal("Database migration failed:", err)
