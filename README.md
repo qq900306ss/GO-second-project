@@ -17,3 +17,46 @@ https://youtu.be/dz6nbNogw5Q
 
 https://youtu.be/wTzc4GjK4Mo
 群組聊天室未更新時候
+
+
+# GO Second Project - 即時通訊與群組聊天應用
+
+## 專案介紹
+這是一個使用 Go 語言開發的即時通訊與群組聊天應用，提供實時消息傳遞和用戶互動功能。
+
+## 技術棧
+- 後端: Go (Golang)
+- 數據庫: MySQL
+- 快取: Redis
+- 容器化: Docker
+- 通訊協議: WebSocket
+
+## 主要功能
+- 用戶註冊與認證
+- 即時消息傳遞
+- 群組聊天
+- 實時通知
+- 用戶在線狀態
+
+## 系統需求
+- Go 1.23
+- Docker
+- Docker Compose
+
+## 快速開始
+
+### 克隆倉庫
+```bash
+
+git clone https://github.com/your-username/GO-second-project.git
+
+cd GO-second-project
+cd SecondProject
+docker-compose up --build -d
+
+```
+
+暫停
+```
+docker-compose stop
+``` 
